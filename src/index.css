@@ -1,0 +1,84 @@
+/* Tokens da marca Bansh (ver "Identidade visual" na spec). */
+:root {
+  --azul-federacao: #1d3a64;
+  --azul-noite: #142b4b;
+  --azul-claro: #dce4ef;
+  --ouro-faixa: #e2be74;
+  --ouro-texto: #7e5b1c;
+  --marfim: #f6f1e6;
+  --cartao: #fffdf8;
+  --ink: #15233a;
+  --ink-suave: #4a5872;
+  --linha: #d9d1c0;
+  --linha-forte: #8c8472;
+  --positivo: #2f6e5e;
+  --negativo: #a8462f;
+
+  --cor-rafael: #bf7b2c;
+  --cor-luana: #4a7cc2;
+  --cor-helena: #6e4e99;
+  --cor-augusto: #2f3a45;
+
+  --fonte-titulo: "Archivo", system-ui, sans-serif;
+  --fonte-texto: "Public Sans", system-ui, sans-serif;
+  --fonte-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+
+  color-scheme: light;
+  font-family: var(--fonte-texto);
+  color: var(--ink);
+  background: var(--marfim);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--marfim);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+h1 {
+  font-size: 32px;
+  letter-spacing: -0.3px;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3 {
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--ink-suave);
+}
+
+p {
+  margin: 0 0 8px;
+  color: var(--ink-suave);
+  line-height: 1.5;
+}
+
+button {
+  font-family: var(--fonte-texto);
+}
+
+a {
+  color: var(--azul-federacao);
+}
+
+:focus-visible {
+  outline: 2px solid var(--azul-federacao);
+  outline-offset: 2px;
+}

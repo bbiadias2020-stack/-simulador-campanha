@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bansh — Dashboard de Campanhas</title>
+<style>
+  :root {
+    --azul-federacao: #1D3A64;
+    --azul-noite: #142B4B;
+    --azul-claro: #DCE4EF;
+    --ouro-faixa: #E2BE74;
+    --ouro-texto: #7E5B1C;
+    --marfim: #F6F1E6;
+    --cartao: #FFFDF8;
+    --ink: #15233A;
+    --ink-suave: #5a6577;
+    --linha: #E4DCC9;
+    --positivo: #2F6E5E;
+    --negativo: #A8462F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Public Sans", "Segoe UI", sans-serif;
+    background: var(--marfim);
+    color: var(--ink);
+  }
+  header {
+    background: var(--azul-noite);
+    color: var(--marfim);
+    padding: 24px 32px;
+    border-bottom: 4px solid var(--ouro-faixa);
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 24px;
+  }
+  header p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 14px;
+  }
+  .status {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+  }
+  .status--ao-vivo { color: #8fd9b6; }
+  .status--erro { color: #f0a58f; }
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+  section.cartao {
+    background: var(--cartao);
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  section.cartao h2 {
+    margin-top: 0;
+    font-size: 17px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--linha);
+  }
+  th {
+    color: var(--ink-suave);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+  td.score { font-weight: 700; font-family: monospace; }
+  .badge-vitoria {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .badge-vitoria--sim { background: #e3f2ec; color: var(--positivo); }
+  .badge-vitoria--nao { background: #f6e6e0; color: var(--negativo); }
+  .lista-comentarios {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 640px;
+    overflow-y: auto;
+  }
+  .comentario {
+    border: 1px solid var(--linha);
+    border-left: 4px solid var(--ouro-faixa);
+    border-radius: 8px;
+    padding: 10px 12px;
+    animation: entra 0.3s ease-out;
+  }
+  @keyframes entra {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .comentario__cabecalho {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-suave);
+    margin-bottom: 4px;
+  }
+  .comentario__nome { color: var(--azul-federacao); font-weight: 700; }
+  .comentario__texto { margin: 0; font-size: 14px; line-height: 1.45; }
+  .vazio { color: var(--ink-suave); font-size: 13.5px; font-style: italic; }
+  .config-aviso {
+    background: #fbe9d7;
+    border: 1px solid var(--ouro-faixa);
+    color: var(--ouro-texto);
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin: 20px 32px 0;
+    font-size: 14px;
+  }
+  .config-aviso code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏛️ Bansh — Dashboard de Campanhas</h1>
+  <p>Ranking e comentários dos jogadores do Simulador de Campanha Presidencial, em tempo real.</p>
+  <span id="status" class="status">conectando...</span>
+</header>
+
+<div id="avisoConfig" class="config-aviso" style="display:none;">
+  Configure <code>SUPABASE_URL</code> e <code>SUPABASE_ANON_KEY</code> no topo deste arquivo
+  (<code>dashboard/index.html</code>) antes de publicar — veja <code>supabase-schema.sql</code> no
+  projeto do jogo para criar as tabelas.
+</div>
+
+<main>
+  <section class="cartao">
+    <h2>🏅 Ranking (score = metade votos finais + metade governabilidade)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Jogador</th><th>Candidato</th><th>Votos</th><th>Gov.</th><th>Score</th><th>Resultado</th>
+        </tr>
+      </thead>
+      <tbody id="corpoRanking">
+        <tr><td colspan="7" class="vazio">Carregando...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cartao">
+    <h2>💬 Comentários dos jogadores (ao vivo)</h2>
+    <div id="listaComentarios" class="lista-comentarios">
+      <p class="vazio">Carregando...</p>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+  // ---- CONFIGURE AQUI antes de publicar (mesmas chaves do .env do jogo) ----
+  const SUPABASE_URL = "https://jevlzxtfertdkblfgiqr.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impldmx6eHRmZXJ0ZGtibGZnaXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1ODc1NTIsImV4cCI6MjEwODE2MzU1Mn0.1TfxRfEtnFFgj2I3q5eDvImaLP2w-8Na4XHtjvDKruw";
+  // ----------------------------------------------------------------------
+
+  const statusEl = document.getElementById("status");
+  const avisoConfigEl = document.getElementById("avisoConfig");
+
+  if (SUPABASE_URL.includes("SEU-PROJETO") || SUPABASE_ANON_KEY.includes("sua-chave")) {
+    avisoConfigEl.style.display = "block";
+    statusEl.textContent = "não configurado";
+    statusEl.className = "status status--erro";
+  } else {
+    iniciar();
+  }
+
+  async function iniciar() {
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function carregarRanking() {
+      const { data, error } = await supabase
+        .from("resultados")
+        .select("*")
+        .order("score", { ascending: false })
+        .limit(100);
+      if (error) { marcarErro(error.message); return; }
+      renderRanking(data ?? []);
+    }
+
+    async function carregarComentarios() {
+      const { data, error } = await supabase
+        .from("comentarios")
+        .select("*")
+        .order("criado_em", { ascending: false })
+        .limit(80);
+      if (error) { marcarErro(error.message); return; }
+      renderComentarios(data ?? []);
+    }
+
+    function marcarErro(msg) {
+      statusEl.textContent = "erro: " + msg;
+      statusEl.className = "status status--erro";
+    }
+
+    function marcarAoVivo() {
+      statusEl.textContent = "ao vivo";
+      statusEl.className = "status status--ao-vivo";
+    }
+
+    function renderRanking(linhas) {
+      const corpo = document.getElementById("corpoRanking");
+      if (linhas.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="7" class="vazio">Ninguém jogou ainda.</td></tr>';
+        return;
+      }
+      corpo.innerHTML = linhas.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(r.nome)}</td>
+          <td>${escapeHtml(r.candidato_nome)}</td>
+          <td>${Number(r.votos_finais).toFixed(1)}%</td>
+          <td>${Number(r.nota_governabilidade).toFixed(0)}</td>
+          <td class="score">${Number(r.score).toFixed(1)}</td>
+          <td><span class="badge-vitoria ${r.venceu ? "badge-vitoria--sim" : "badge-vitoria--nao"}">${r.venceu ? "venceu" : "perdeu"}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderComentarios(linhas) {
+      const lista = document.getElementById("listaComentarios");
+      if (linhas.length === 0) {
+        lista.innerHTML = '<p class="vazio">Nenhum comentário ainda.</p>';
+        return;
+      }
+      lista.innerHTML = linhas.map((c) => `
+        <div class="comentario">
+          <div class="comentario__cabecalho">
+            <span><span class="comentario__nome">${escapeHtml(c.nome)}</span> · ${escapeHtml(c.fase_nome)}</span>
+            <span>${formatarHora(c.criado_em)}</span>
+          </div>
+          <p class="comentario__texto">${escapeHtml(c.texto)}</p>
+        </div>
+      `).join("");
+    }
+
+    function formatarHora(iso) {
+      try { return new Date(iso).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }); }
+      catch { return ""; }
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = String(s ?? "");
+      return d.innerHTML;
+    }
+
+    await carregarRanking();
+    await carregarComentarios();
+    marcarAoVivo();
+
+    // Tempo real: qualquer escrita nova de qualquer jogador recarrega a lista afetada.
+    supabase
+      .channel("resultados-mudancas")
+      .on("postgres_changes", { event: "*", schema: "public", table: "resultados" }, carregarRanking)
+      .subscribe();
+
+    supabase
+      .channel("comentarios-mudancas")
+      .on("postgres_changes", { event: "*", schema: "public", table: "comentarios" }, carregarComentarios)
+      .subscribe();
+  }
+</script>
+
+</body>
+</html>
