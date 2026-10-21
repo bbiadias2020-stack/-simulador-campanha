@@ -8,7 +8,7 @@ import { efeitoVerba } from "../engine/budget";
 import { gerarResultadoPesquisa, margemErroPesquisa } from "../engine/polls";
 import { dilemasDaFase } from "../engine/selecaoConteudo";
 import { afinidadeTransferencia } from "../engine/secondRound";
-import { enviarComentario } from "../integracao/ranking";
+import { enviarComentario, enviarDecisao } from "../integracao/ranking";
 import { RANKING_HABILITADO } from "../integracao/supabase";
 import { ORDEM_FASES, TIPO_RODADA } from "../engine/types";
 import type {
@@ -220,13 +220,34 @@ export function TelaRodada() {
 
   /** Aplica a opção (manual ou por tempo esgotado) e avança para o próximo dilema/etapa. */
   function confirmarOpcao(opcaoId: string, conselheiroId?: ConselheiroId, porOmissao = false) {
+    const dilema = dilemas[indiceDilema];
     dispatch({
       type: "RESOLVER_DILEMA",
-      dilema: dilemas[indiceDilema],
+      dilema,
       opcaoId,
       conselheiroSeguidoId: conselheiroId,
       porOmissao,
     });
+
+    const jogador = carregarJogadorAtual();
+    if (jogador) {
+      const opcao = dilema.opcoes.find((o) => o.id === opcaoId);
+      void enviarDecisao({
+        tipo: "dilema",
+        jogoId: jogador.jogoId,
+        nome: jogador.nome,
+        candidatoId: state.jogadorId,
+        fase: state.faseAtual,
+        faseNome: NOME_FASE[state.faseAtual],
+        dilemaId: dilema.id,
+        dilemaTitulo: dilema.titulo,
+        opcaoId,
+        opcaoTexto: opcao?.texto ?? opcaoId,
+        conselheiroSeguidoId: conselheiroId,
+        porOmissao,
+      });
+    }
+
     setOpcaoSelecionada(undefined);
     if (indiceDilema + 1 < dilemas.length) setIndiceDilema(indiceDilema + 1);
     else setEtapa("tom");
@@ -259,6 +280,20 @@ export function TelaRodada() {
 
   function confirmarVerba() {
     dispatch({ type: "APLICAR_VERBA", alocacao });
+
+    const jogador = carregarJogadorAtual();
+    if (jogador) {
+      void enviarDecisao({
+        tipo: "verba",
+        jogoId: jogador.jogoId,
+        nome: jogador.nome,
+        candidatoId: state.jogadorId,
+        fase: state.faseAtual,
+        faseNome: NOME_FASE[state.faseAtual],
+        alocacao,
+      });
+    }
+
     if (dilemas.length > 0) setEtapa("dilema");
     else setEtapa("tom");
   }
@@ -272,6 +307,20 @@ export function TelaRodada() {
   function confirmarTom() {
     if (!tomSelecionado) return;
     tomUsadoRef.current = tomSelecionado;
+
+    const jogador = carregarJogadorAtual();
+    if (jogador) {
+      void enviarDecisao({
+        tipo: "tom",
+        jogoId: jogador.jogoId,
+        nome: jogador.nome,
+        candidatoId: state.jogadorId,
+        fase: state.faseAtual,
+        faseNome: NOME_FASE[state.faseAtual],
+        tom: tomSelecionado,
+      });
+    }
+
     dispatch({ type: "AVANCAR_FASE", tom: tomSelecionado });
   }
 

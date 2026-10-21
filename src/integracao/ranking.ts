@@ -1,4 +1,4 @@
-import type { CandidatoId } from "../engine/types";
+import type { AlocacaoVerba, CandidatoId, ConselheiroId, TomCampanha } from "../engine/types";
 import { supabase } from "./supabase";
 
 export interface ComentarioRodada {
@@ -9,6 +9,36 @@ export interface ComentarioRodada {
   faseNome: string;
   texto: string;
 }
+
+interface DecisaoBase {
+  jogoId: string;
+  nome: string;
+  candidatoId: CandidatoId;
+  fase: string;
+  faseNome: string;
+}
+
+export interface DecisaoVerba extends DecisaoBase {
+  tipo: "verba";
+  alocacao: AlocacaoVerba;
+}
+
+export interface DecisaoDilema extends DecisaoBase {
+  tipo: "dilema";
+  dilemaId: string;
+  dilemaTitulo: string;
+  opcaoId: string;
+  opcaoTexto: string;
+  conselheiroSeguidoId?: ConselheiroId;
+  porOmissao: boolean;
+}
+
+export interface DecisaoTom extends DecisaoBase {
+  tipo: "tom";
+  tom: TomCampanha;
+}
+
+export type Decisao = DecisaoVerba | DecisaoDilema | DecisaoTom;
 
 export interface ResultadoFinal {
   jogoId: string;
@@ -38,6 +68,35 @@ export async function enviarComentario(c: ComentarioRodada): Promise<void> {
     texto: c.texto,
   });
   if (error) console.warn("Falha ao enviar comentário para o ranking público:", error.message);
+}
+
+export async function enviarDecisao(d: Decisao): Promise<void> {
+  if (!supabase) return;
+
+  const detalhe =
+    d.tipo === "verba"
+      ? d.alocacao
+      : d.tipo === "dilema"
+        ? {
+            dilemaId: d.dilemaId,
+            dilemaTitulo: d.dilemaTitulo,
+            opcaoId: d.opcaoId,
+            opcaoTexto: d.opcaoTexto,
+            conselheiroSeguidoId: d.conselheiroSeguidoId ?? null,
+            porOmissao: d.porOmissao,
+          }
+        : { tom: d.tom };
+
+  const { error } = await supabase.from("decisoes").insert({
+    jogo_id: d.jogoId,
+    nome: d.nome,
+    candidato_id: d.candidatoId,
+    fase: d.fase,
+    fase_nome: d.faseNome,
+    tipo: d.tipo,
+    detalhe,
+  });
+  if (error) console.warn("Falha ao enviar decisão para o dashboard público:", error.message);
 }
 
 export async function enviarResultadoFinal(r: ResultadoFinal): Promise<void> {

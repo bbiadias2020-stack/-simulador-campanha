@@ -136,6 +136,53 @@
     font-size: 14px;
   }
   .config-aviso code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 4px; }
+
+  .secao-escolhas {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px 64px;
+  }
+  .secao-escolhas h2 {
+    font-size: 18px;
+    margin: 0 0 16px;
+  }
+  .grade-graficos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  @media (max-width: 800px) {
+    .grade-graficos { grid-template-columns: 1fr; }
+  }
+  .cartao-grafico {
+    background: var(--cartao);
+    border: 1px solid var(--linha);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .cartao-grafico h3 {
+    margin: 0 0 4px;
+    font-size: 14.5px;
+  }
+  .cartao-grafico .subtitulo {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: var(--ink-suave);
+  }
+  .cartao-grafico__corpo {
+    position: relative;
+    height: 240px;
+  }
+  select.seletor-dilema {
+    font-size: 12.5px;
+    padding: 5px 8px;
+    border: 1px solid var(--linha);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    max-width: 100%;
+    background: var(--cartao);
+    color: var(--ink);
+  }
 </style>
 </head>
 <body>
@@ -175,6 +222,34 @@
   </section>
 </main>
 
+<section class="secao-escolhas">
+  <h2>🗳️ Principais escolhas dos jogadores</h2>
+  <div class="grade-graficos">
+    <div class="cartao-grafico">
+      <h3>Tom de campanha mais usado</h3>
+      <p class="subtitulo">Quantas vezes cada tom foi escolhido, somando todas as rodadas de todos os jogadores.</p>
+      <div class="cartao-grafico__corpo"><canvas id="graficoTom"></canvas></div>
+    </div>
+    <div class="cartao-grafico">
+      <h3>Gasto médio por canal de verba</h3>
+      <p class="subtitulo">Média de R$ mi alocados em cada canal, por rodada de verba.</p>
+      <div class="cartao-grafico__corpo"><canvas id="graficoVerba"></canvas></div>
+    </div>
+    <div class="cartao-grafico">
+      <h3>Conselheiro mais seguido</h3>
+      <p class="subtitulo">Quantas vezes o conselho de cada um foi seguido num dilema.</p>
+      <div class="cartao-grafico__corpo"><canvas id="graficoConselheiro"></canvas></div>
+    </div>
+    <div class="cartao-grafico">
+      <h3>Opção mais escolhida por dilema</h3>
+      <p class="subtitulo">Escolha um dilema para ver como os jogadores decidiram.</p>
+      <select id="seletorDilema" class="seletor-dilema"></select>
+      <div class="cartao-grafico__corpo"><canvas id="graficoDilema"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script type="module">
   // ---- CONFIGURE AQUI antes de publicar (mesmas chaves do .env do jogo) ----
   const SUPABASE_URL = "https://jevlzxtfertdkblfgiqr.supabase.co";
@@ -204,6 +279,111 @@
         .limit(100);
       if (error) { marcarErro(error.message); return; }
       renderRanking(data ?? []);
+    }
+
+    const NOME_CONSELHEIRO = { neusa: "Neusa Lacerda", caio: "Caio Fontes", sonia: "Sônia Arruda", beto: "Beto Rangel" };
+    const NOME_CANAL = { tv: "TV", digital: "Digital", comicios: "Comícios", pesquisas: "Pesquisas", juridica: "Jurídica" };
+    const NOME_TOM = { propositivo: "Propositivo", ataque: "De ataque", moderado: "Ocupar o centro", radical: "Radical" };
+    const CORES_GRAFICO = ["#1D3A64", "#E2BE74", "#2F6E5E", "#A8462F", "#3E6698", "#7E5B1C"];
+
+    let decisoesCache = [];
+    let chartTom, chartVerba, chartConselheiro, chartDilema;
+
+    function montarGrafico(instanciaAnterior, canvasId, config) {
+      if (instanciaAnterior) instanciaAnterior.destroy();
+      return new Chart(document.getElementById(canvasId), config);
+    }
+
+    function barraConfig(labels, valores, opts = {}) {
+      return {
+        type: opts.pizza ? "doughnut" : "bar",
+        data: {
+          labels,
+          datasets: [{ data: valores, backgroundColor: CORES_GRAFICO, borderRadius: opts.pizza ? 0 : 6 }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: opts.horizontal ? "y" : "x",
+          plugins: { legend: { display: !!opts.pizza, labels: { boxWidth: 12, font: { size: 11 } } } },
+          scales: opts.pizza ? {} : {
+            x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { font: { size: 11 } } },
+          },
+        },
+      };
+    }
+
+    function renderGraficoTom() {
+      const contagem = {};
+      for (const d of decisoesCache) {
+        if (d.tipo !== "tom") continue;
+        const tom = d.detalhe?.tom;
+        if (!tom) continue;
+        contagem[tom] = (contagem[tom] ?? 0) + 1;
+      }
+      const labels = Object.keys(contagem).map((t) => NOME_TOM[t] ?? t);
+      const valores = Object.values(contagem);
+      chartTom = montarGrafico(chartTom, "graficoTom", barraConfig(labels, valores, { pizza: true }));
+    }
+
+    function renderGraficoVerba() {
+      const somas = { tv: 0, digital: 0, comicios: 0, pesquisas: 0, juridica: 0 };
+      let n = 0;
+      for (const d of decisoesCache) {
+        if (d.tipo !== "verba") continue;
+        n++;
+        for (const canal of Object.keys(somas)) somas[canal] += Number(d.detalhe?.[canal] ?? 0);
+      }
+      const labels = Object.keys(somas).map((c) => NOME_CANAL[c]);
+      const valores = Object.keys(somas).map((c) => (n > 0 ? +(somas[c] / n).toFixed(1) : 0));
+      chartVerba = montarGrafico(chartVerba, "graficoVerba", barraConfig(labels, valores));
+    }
+
+    function renderGraficoConselheiro() {
+      const contagem = {};
+      for (const d of decisoesCache) {
+        if (d.tipo !== "dilema") continue;
+        const id = d.detalhe?.conselheiroSeguidoId;
+        if (!id) continue;
+        contagem[id] = (contagem[id] ?? 0) + 1;
+      }
+      const labels = Object.keys(contagem).map((id) => NOME_CONSELHEIRO[id] ?? id);
+      const valores = Object.values(contagem);
+      chartConselheiro = montarGrafico(chartConselheiro, "graficoConselheiro", barraConfig(labels, valores, { horizontal: true }));
+    }
+
+    function renderSeletorDilema() {
+      const seletor = document.getElementById("seletorDilema");
+      const titulos = [...new Set(decisoesCache.filter((d) => d.tipo === "dilema").map((d) => d.detalhe?.dilemaTitulo).filter(Boolean))];
+      const atual = seletor.value;
+      seletor.innerHTML = titulos.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+      if (titulos.includes(atual)) seletor.value = atual;
+      renderGraficoDilema();
+    }
+
+    function renderGraficoDilema() {
+      const seletor = document.getElementById("seletorDilema");
+      const titulo = seletor.value;
+      const contagem = {};
+      for (const d of decisoesCache) {
+        if (d.tipo !== "dilema" || d.detalhe?.dilemaTitulo !== titulo) continue;
+        const texto = d.detalhe?.opcaoTexto ?? d.detalhe?.opcaoId ?? "?";
+        contagem[texto] = (contagem[texto] ?? 0) + 1;
+      }
+      const labels = Object.keys(contagem);
+      const valores = Object.values(contagem);
+      chartDilema = montarGrafico(chartDilema, "graficoDilema", barraConfig(labels, valores, { horizontal: true }));
+    }
+
+    async function carregarDecisoes() {
+      const { data, error } = await supabase.from("decisoes").select("*").limit(5000);
+      if (error) { marcarErro(error.message); return; }
+      decisoesCache = data ?? [];
+      renderGraficoTom();
+      renderGraficoVerba();
+      renderGraficoConselheiro();
+      renderSeletorDilema();
     }
 
     async function carregarComentarios() {
@@ -273,8 +453,11 @@
       return d.innerHTML;
     }
 
+    document.getElementById("seletorDilema").addEventListener("change", renderGraficoDilema);
+
     await carregarRanking();
     await carregarComentarios();
+    await carregarDecisoes();
     marcarAoVivo();
 
     // Tempo real: qualquer escrita nova de qualquer jogador recarrega a lista afetada.
@@ -286,6 +469,11 @@
     supabase
       .channel("comentarios-mudancas")
       .on("postgres_changes", { event: "*", schema: "public", table: "comentarios" }, carregarComentarios)
+      .subscribe();
+
+    supabase
+      .channel("decisoes-mudancas")
+      .on("postgres_changes", { event: "*", schema: "public", table: "decisoes" }, carregarDecisoes)
       .subscribe();
   }
 </script>
