@@ -96,7 +96,7 @@ export const PROB_MAX_FALENCIA = 0.6;
 // ---------------------------------------------------------------------------
 
 /** Tempo (em segundos) que o jogador tem para decidir um dilema antes do cronômetro zerar. */
-export const TEMPO_LIMITE_DILEMA_SEGUNDOS = 20;
+export const TEMPO_LIMITE_DILEMA_SEGUNDOS = 30;
 
 /**
  * Se o tempo esgota sem NENHUMA opção selecionada (não é o caso de já ter
