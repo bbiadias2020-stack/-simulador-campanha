@@ -1,4 +1,5 @@
 import {
+  BONUS_CANDIDATO_OCIOSO_ATAQUE,
   CONTRA_ATAQUE_GANHO_NUCLEO,
   CONTRA_ATAQUE_PERDA_SENTIMENTO,
   CRESCIMENTO_ORGANICO_ADVERSARIO_DESVIO,
@@ -56,7 +57,9 @@ function segmentoMaisForte(estado: CandidatoEstado): keyof typeof estado.intenca
  * IA simples dos 3 adversários: eles não jogam o jogo completo, só reagem ao tom
  * escolhido pelo jogador na rodada (ver Parte 2 da spec — "adversário que reage").
  * - Jogador ataca → o adversário líder contra-ataca: ganha no núcleo duro, mas
- *   perde sentimento geral (polarização).
+ *   perde sentimento geral (polarização). E quem NÃO é o alvo também ganha um
+ *   pouco — "candidato ocioso ganha" (ver BONUS_CANDIDATO_OCIOSO_ATAQUE): atacar
+ *   fortalece dois adversários ao mesmo tempo, não só um.
  * - Jogador ocupa o centro (moderado) → o adversário ideologicamente mais distante
  *   radicaliza: reforça seu segmento mais forte, mas perde apelo de centro.
  */
@@ -78,6 +81,15 @@ export function reagirAdversarios(state: GameState, tomJogador: TomCampanha): Ga
       },
       tomAtual: "ataque",
     };
+
+    for (const id of adversarios) {
+      if (id === alvoId) continue;
+      const ocioso = candidatos[id];
+      candidatos[id] = {
+        ...ocioso,
+        metricas: { ...ocioso.metricas, intencaoVoto: Math.min(100, ocioso.metricas.intencaoVoto + BONUS_CANDIDATO_OCIOSO_ATAQUE) },
+      };
+    }
   }
 
   if (tomJogador === "moderado") {

@@ -91,6 +91,31 @@ describe("aplicarPlataforma", () => {
     const atualizado = aplicarPlataforma(state, { saude: 5, seguranca: 5, educacao: 5, economia: 5 });
     expect(atualizado.candidatos.helena).toEqual(state.candidatos.helena);
   });
+
+  it("ênfase extrema (acima de 8) custa governabilidade desproporcionalmente mais por ponto", () => {
+    const state = criarNovoJogo("luana", 1);
+    const moderada = aplicarPlataforma(state, { saude: 8, seguranca: 0, educacao: 0, economia: 0 });
+    const extrema = aplicarPlataforma(state, { saude: 10, seguranca: 0, educacao: 0, economia: 0 });
+
+    const custoPorPontoModerado = moderada.promessas[0].custoGovernabilidade / 8;
+    const custoPorPontoExtremo = extrema.promessas[0].custoGovernabilidade / 10;
+    expect(custoPorPontoExtremo).toBeGreaterThan(custoPorPontoModerado);
+  });
+
+  it("dívida de campanha alta aumenta o custo de governabilidade da promessa", () => {
+    const state = criarNovoJogo("luana", 1);
+    const comDivida = {
+      ...state,
+      candidatos: { ...state.candidatos, luana: { ...state.candidatos.luana, dividaMi: 30 } },
+    };
+
+    const semDivida = aplicarPlataforma(state, { saude: 8, seguranca: 0, educacao: 0, economia: 0 });
+    const comDividaResultado = aplicarPlataforma(comDivida, { saude: 8, seguranca: 0, educacao: 0, economia: 0 });
+
+    expect(comDividaResultado.promessas[0].custoGovernabilidade).toBeGreaterThan(
+      semDivida.promessas[0].custoGovernabilidade,
+    );
+  });
 });
 
 describe("resolverDilema", () => {
@@ -252,6 +277,50 @@ describe("avancarFase", () => {
     const state = criarNovoJogo("luana", 1); // riscoJuridico inicial = 12
     const proximo = avancarFase(state);
     expect(proximo.terminado).toBe(false);
+  });
+
+  it("recurso jurídico reduz a chance de cassação da rodada (sem recurso cassa, com recurso não)", () => {
+    let state = criarNovoJogo("luana", 1);
+    state = {
+      ...state,
+      candidatos: {
+        ...state.candidatos,
+        // risco 78 + seed 1: a mesma rolagem dispara cassação com a probabilidade
+        // normal (20%) mas fica abaixo do limiar reduzido pelo recurso (10%).
+        luana: { ...state.candidatos.luana, metricas: { ...state.candidatos.luana.metricas, riscoJuridico: 78 } },
+      },
+    };
+
+    const semRecurso = avancarFase(state, "moderado", false);
+    expect(semRecurso.terminado).toBe(true);
+    expect(semRecurso.resultado?.cassado).toBe(true);
+
+    const comRecurso = avancarFase(state, "moderado", true);
+    expect(comRecurso.terminado).toBe(false);
+  });
+
+  it("recurso jurídico deduz o custo da caixa (ou gera dívida se faltar)", () => {
+    let state = criarNovoJogo("luana", 1);
+    state = {
+      ...state,
+      candidatos: {
+        ...state.candidatos,
+        luana: { ...state.candidatos.luana, metricas: { ...state.candidatos.luana.metricas, riscoJuridico: 78, caixaMi: 3 } },
+      },
+    };
+
+    const proximo = avancarFase(state, "moderado", true);
+    expect(proximo.terminado).toBe(false);
+    expect(proximo.candidatos.luana.metricas.caixaMi).toBe(0);
+    expect(proximo.candidatos.luana.dividaMi).toBeGreaterThan(state.candidatos.luana.dividaMi);
+  });
+
+  it("recurso jurídico sem o risco cruzar o limiar não tem efeito nenhum", () => {
+    const state = criarNovoJogo("luana", 1); // riscoJuridico inicial = 12, bem abaixo do limiar
+    const semRecurso = avancarFase(state, "moderado", false);
+    const comRecurso = avancarFase(state, "moderado", true);
+    expect(comRecurso.candidatos.luana.metricas.caixaMi).toBe(semRecurso.candidatos.luana.metricas.caixaMi);
+    expect(comRecurso.candidatos.luana.dividaMi).toBe(semRecurso.candidatos.luana.dividaMi);
   });
 
   it("falência: dívida descontrolada também pode encerrar a campanha antes do fim", () => {

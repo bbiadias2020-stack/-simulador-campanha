@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { TEMPO_LIMITE_DILEMA_SEGUNDOS } from "../config/balance";
+import { CUSTO_RECURSO_JURIDICO_MI, LIMIAR_RISCO_CASSACAO, TEMPO_LIMITE_DILEMA_SEGUNDOS } from "../config/balance";
 import { CANDIDATOS_BASE } from "../data/candidatos";
 import { CONSELHEIROS_BASE } from "../data/conselheiros";
 import { SEGMENTOS } from "../data/segmentos";
@@ -141,6 +141,7 @@ export function TelaRodada() {
   const [mostrarPesquisa, setMostrarPesquisa] = useState(false);
   const [comentarioRodada, setComentarioRodada] = useState("");
   const [comentarioEnviado, setComentarioEnviado] = useState(false);
+  const [recursoJuridico, setRecursoJuridico] = useState(false);
 
   // null = ainda não rodou; guardamos o faseIndex (não um booleano "primeira vez")
   // porque o StrictMode do React roda o efeito duas vezes na montagem em dev, e um
@@ -192,6 +193,7 @@ export function TelaRodada() {
     setTomSelecionado(undefined);
     setComentarioRodada("");
     setComentarioEnviado(false);
+    setRecursoJuridico(false);
     setMetricasInicioRodada(metricasAtuais);
     setIndecisosInicioRodada(state.indecisosRestantes);
     setCandidatosInicioRodada(state.candidatos);
@@ -321,7 +323,7 @@ export function TelaRodada() {
       });
     }
 
-    dispatch({ type: "AVANCAR_FASE", tom: tomSelecionado });
+    dispatch({ type: "AVANCAR_FASE", tom: tomSelecionado, recursoJuridicoContratado: recursoJuridico });
   }
 
   const pesquisa = mostrarPesquisa ? gerarResultadoPesquisa(state) : null;
@@ -734,6 +736,18 @@ export function TelaRodada() {
                   </button>
                 ))}
               </div>
+
+              {jogador.metricas.riscoJuridico > LIMIAR_RISCO_CASSACAO && (
+                <label className="bloco-recurso-juridico">
+                  <input type="checkbox" checked={recursoJuridico} onChange={(e) => setRecursoJuridico(e.target.checked)} />
+                  <span>
+                    <strong>⚖️ Contratar recurso de urgência na Justiça Eleitoral</strong> — custa R${" "}
+                    {CUSTO_RECURSO_JURIDICO_MI} mi (vira dívida se faltar caixa) e reduz pela metade a chance de
+                    cassação nesta rodada. Não elimina o risco — litígio ativo atrasa, não garante vitória.
+                  </span>
+                </label>
+              )}
+
               <button
                 type="button"
                 className="botao-decisao botao-decisao--primario"

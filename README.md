@@ -168,6 +168,29 @@ A spec deixa as fórmulas de efeito em aberto. Pontos de partida assumidos, todo
   punição aleatória gratuita. Também é possível não passar para o 2º turno — se o
   candidato do jogador não ficar entre os 2 mais votados no 1º turno, a partida
   termina ali, sem continuar jogando um 2º turno que o candidato nem disputa.
+- **Recurso de urgência na Justiça Eleitoral:** disponível na etapa de tom sempre
+  que o risco jurídico já passou do limiar de cassação. Custa R$ 8 mi (vira dívida
+  se faltar caixa) e reduz pela metade a chance de cassação daquela rodada
+  específica — litígio ativo atrasa a decisão, mas não garante vitória (baseado em
+  casos reais onde cassação raramente é automática).
+- **Candidato "ocioso" ganha:** quando o jogador ataca, o adversário-alvo ganha no
+  núcleo duro (como já existia), mas os adversários que NÃO são o alvo também
+  ganham um pouco de intenção de voto — baseado em estudo publicado (meta-análise
+  de 33 estudos) mostrando que, numa disputa de 3+ candidatos, quem fica de fora de
+  uma troca de ataques sai ganhando. Atacar agora fortalece até dois adversários ao
+  mesmo tempo, não só um — o tom "de ataque" fica mais arriscado do que parece.
+- **Desinformação não é toda igual:** opções antiéticas podem sobrescrever o ganho
+  imediato e a chance de estourar padrão (`ganhoImediatoAntieticoOverride`/
+  `probabilidadeEstouroOverride` por opção). O deepfake sem rótulo, por exemplo,
+  tem ganho imediato menor e risco de estourar maior que o padrão — pesquisa real
+  mostra que manipulação sofisticada tem efeito eleitoral mensurável baixo e é mais
+  fácil de desmascarar tecnicamente do que desinformação coordenada em massa.
+- **Prometer demais tem custo crescente:** ênfase de plataforma acima de 8 (de 10)
+  soma um custo extra de governabilidade por ponto, além do custo normal — presidentes
+  reais cumprem só 23%-47% das promessas de campanha; prometer tudo em tudo pesa
+  desproporcionalmente mais do que uma promessa isolada e moderada. Dívida de
+  campanha alta no momento da Plataforma de Governo também aumenta esse custo —
+  dívida "contamina" a margem de manobra do mandato.
 
 ## Resultado da simulação (critério de aceite)
 
@@ -176,10 +199,10 @@ a saída antecipada por cassação/falência ativa:
 
 | Perfil  | Taxa de vitória | Foi a 2º turno | Governabilidade média |
 | ------- | ---------------: | --------------: | ----------------------: |
-| Luana   | 58.7%            | 84.2%            | 74.9                    |
-| Rafael  | 79.5%            | 85.2%            | 72.9                    |
-| Helena  | 76.0%            | 79.8%            | 61.0                    |
-| Augusto | 51.4%            | 76.2%            | 66.8                    |
+| Luana   | 53.1%            | 80.6%            | 74.4                    |
+| Rafael  | 75.7%            | 80.9%            | 72.4                    |
+| Helena  | 72.0%            | 78.4%            | 60.2                    |
+| Augusto | 46.8%            | 71.6%            | 66.1                    |
 
 **Leitura:** com o crescimento orgânico dos adversários e a surpresa de última hora
 (ver seção de suposições acima), decisão aleatória deixou de ser quase garantia de
@@ -214,5 +237,5 @@ mecânica de surpresa de última hora, com decisões boas.
   problemático, promessa de cargos inviáveis) — acima do mínimo de 3 pedido pela
   spec. Toda opção tem uma `reacao` (manchete/post/fala de eleitor-persona) exibida
   assim que é selecionada, antes de confirmar.
-- Motor com 67 testes automatizados (`src/engine/__tests__/`), incluindo uma
+- Motor com 78 testes automatizados (`src/engine/__tests__/`), incluindo uma
   partida completa simulada do início ao fim para os 4 perfis.

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { BONUS_IMEDIATO_ANTIETICO, PROB_BASE_ESTOURO_RISCO } from "../../config/balance";
 import { aplicarOpcaoDilema, multiplicadorConselheiro } from "../dilemmas";
 import { CANDIDATOS_BASE } from "../../data/candidatos";
 import { DILEMAS } from "../../data/dilemas";
 import type { CandidatoEstado, ConselheiroId } from "../types";
 
 const whatsappDilema = DILEMAS.find((d) => d.id === "disparo-whatsapp")!;
+const deepfakeDilema = DILEMAS.find((d) => d.id === "ia-deepfake")!;
 
 function estadoLuana(): CandidatoEstado {
   const base = CANDIDATOS_BASE.luana;
@@ -67,5 +69,14 @@ describe("aplicarOpcaoDilema", () => {
     const opcaoB = whatsappDilema.opcoes.find((o) => o.id === "B")!;
     const { indecisosCapturados } = aplicarOpcaoDilema(estadoLuana(), whatsappDilema, opcaoB, 1);
     expect(indecisosCapturados).toBe(0);
+  });
+
+  it("deepfake: ganho imediato menor e risco de estourar maior que o padrão antiético global", () => {
+    const opcaoDeepfake = deepfakeDilema.opcoes.find((o) => o.id === "A")!;
+    expect(opcaoDeepfake.ganhoImediatoAntieticoOverride).toBeLessThan(BONUS_IMEDIATO_ANTIETICO);
+    expect(opcaoDeepfake.probabilidadeEstouroOverride).toBeGreaterThan(PROB_BASE_ESTOURO_RISCO);
+
+    const { riscoGerado } = aplicarOpcaoDilema(estadoLuana(), deepfakeDilema, opcaoDeepfake, 1);
+    expect(riscoGerado?.probabilidadePorRodada).toBe(opcaoDeepfake.probabilidadeEstouroOverride);
   });
 });

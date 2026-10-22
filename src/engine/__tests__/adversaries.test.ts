@@ -35,4 +35,15 @@ describe("reagirAdversarios", () => {
     const atualizado = reagirAdversarios(state, "ataque");
     expect(atualizado.candidatos.luana).toEqual(state.candidatos.luana);
   });
+
+  it("tom de ataque: candidatos 'ociosos' (nem jogador, nem alvo) também ganham voto", () => {
+    const state = criarNovoJogo("rafael", 1); // rafael não lidera nada, helena é a líder/alvo
+    const atualizado = reagirAdversarios(state, "ataque");
+    expect(atualizado.candidatos.luana.metricas.intencaoVoto).toBeGreaterThan(
+      state.candidatos.luana.metricas.intencaoVoto,
+    );
+    expect(atualizado.candidatos.augusto.metricas.intencaoVoto).toBeGreaterThan(
+      state.candidatos.augusto.metricas.intencaoVoto,
+    );
+  });
 });

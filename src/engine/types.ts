@@ -169,6 +169,15 @@ export interface OpcaoDilema {
    * brancos/nulos (GameState.indecisosRestantes), não "nasce do nada".
    */
   capturaIndecisos?: boolean;
+  /**
+   * Sobrescreve BONUS_IMEDIATO_ANTIETICO/PROB_BASE_ESTOURO_RISCO só para esta
+   * opção antiética — nem toda escolha antiética tem o mesmo perfil de risco
+   * (ex.: desinformação coordenada em massa tem efeito real maior e comprovado;
+   * manipulação sofisticada tipo deepfake tende a ser mais fácil de desmascarar
+   * tecnicamente, então rende menos mas estoura mais fácil).
+   */
+  ganhoImediatoAntieticoOverride?: number;
+  probabilidadeEstouroOverride?: number;
 }
 
 export interface OpiniaoConselheiro {

@@ -372,6 +372,29 @@
   border-radius: 10px;
 }
 
+.bloco-recurso-juridico {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: var(--negativo-fundo, #f6e6e0);
+  border: 1px solid var(--negativo);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.bloco-recurso-juridico input {
+  margin-top: 3px;
+  flex: none;
+}
+
+.bloco-recurso-juridico strong {
+  color: var(--negativo);
+}
+
 .bloco-comentario-rodada label {
   display: block;
   margin-bottom: 8px;

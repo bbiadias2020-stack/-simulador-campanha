@@ -28,6 +28,24 @@ export const AFINIDADE_SEGMENTO_AREA: Record<AreaPolitica, Partial<Record<Segmen
 export const LIMIAR_ENFASE_VIRA_PROMESSA = 7;
 /** Custo de governabilidade por ponto de ênfase acima do limiar, por área prometida. */
 export const CUSTO_GOVERNABILIDADE_POR_PONTO_ENFASE = 1.5;
+/**
+ * A partir desse nível de ênfase, cada ponto custa EXTRA em cima do custo normal
+ * (não substitui, soma) — presidentes reais cumprem só 23%-47% das promessas de
+ * campanha; prometer tudo em tudo (ênfase máxima em várias áreas) é o padrão mais
+ * associado a desgaste de governabilidade, não uma promessa isolada e moderada.
+ */
+export const LIMIAR_ENFASE_PROMESSA_EXTREMA = 8;
+export const CUSTO_GOVERNABILIDADE_EXTRA_PROMESSA_EXTREMA = 2;
+
+/**
+ * Dívida de campanha "contamina" a margem de manobra do governo: acima deste
+ * patamar de dívida, cada ponto de governabilidade que uma promessa custaria
+ * custa proporcionalmente mais — espelha casos reais em que dívida de campanha
+ * não paga persegue o mandato depois da eleição.
+ */
+export const LIMIAR_DIVIDA_PLATAFORMA_ARRISCADA = 10;
+/** Fração extra de custo de governabilidade por R$1mi de dívida acima do limiar. */
+export const FATOR_CUSTO_GOVERNABILIDADE_DIVIDA_PLATAFORMA = 0.05;
 
 // ---------------------------------------------------------------------------
 // Cassação (risco jurídico alto demais encerra a campanha antes do fim)
@@ -44,6 +62,17 @@ export const PROB_BASE_CASSACAO = 0.12;
 export const FATOR_PROB_CASSACAO_POR_PONTO = 0.01;
 /** Teto de chance de cassação numa única rodada, mesmo com risco jurídico no máximo. */
 export const PROB_MAX_CASSACAO = 0.6;
+
+/**
+ * Recurso de urgência na Justiça Eleitoral: casos reais (ex.: disputa sobre a 14ª
+ * Emenda nos EUA em 2023-2024) mostram que cassação raramente é automática —
+ * litígio ativo pode reduzir o risco daquela rodada específica, mesmo sem
+ * eliminar o risco jurídico de base. Disponível só quando o risco já cruzou
+ * LIMIAR_RISCO_CASSACAO; custa caixa (ou vira dívida, como qualquer gasto).
+ */
+export const CUSTO_RECURSO_JURIDICO_MI = 8;
+/** Quanto o recurso multiplica a chance de cassação da rodada (reduz, não zera). */
+export const FATOR_REDUCAO_CASSACAO_COM_RECURSO = 0.5;
 
 // ---------------------------------------------------------------------------
 // Falência de campanha (dívida descontrolada também encerra a campanha antes do fim)
@@ -157,6 +186,15 @@ export const CRESCIMENTO_ORGANICO_ADVERSARIO_DESVIO = 0.9;
 export const CONTRA_ATAQUE_GANHO_NUCLEO = 1.2;
 /** ...mas perde isso de sentimento geral (polarização). */
 export const CONTRA_ATAQUE_PERDA_SENTIMENTO = 1.5;
+/**
+ * "Candidato ocioso ganha": estudo publicado (AJPS, meta-análise de 33 estudos)
+ * mostra que, numa disputa de 3+ candidatos, quando dois trocam ataques o
+ * candidato que fica de fora ganha em média +3,7pp de voto. Todo adversário que
+ * NÃO é o jogador nem o alvo do ataque ganha isso quando o jogador ataca —
+ * atacar fortalece o líder visado (núcleo duro) E fortalece quem nem entrou na
+ * briga, tornando essa escolha de tom mais arriscada do que parece.
+ */
+export const BONUS_CANDIDATO_OCIOSO_ATAQUE = 0.9;
 /** Se o jogador modera/ocupa o centro, adversários ideologicamente distantes radicalizam: */
 export const RADICALIZACAO_GANHO_SEGMENTO_AFIM = 1.8;
 export const RADICALIZACAO_PERDA_CENTRO = 1.0;

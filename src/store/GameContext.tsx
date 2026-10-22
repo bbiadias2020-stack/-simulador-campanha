@@ -16,7 +16,7 @@ type Action =
   | { type: "APLICAR_VERBA"; alocacao: AlocacaoVerba }
   | { type: "APLICAR_PLATAFORMA"; enfases: EnfasePlataforma }
   | { type: "RESOLVER_DILEMA"; dilema: Dilema; opcaoId: string; conselheiroSeguidoId?: ConselheiroId; porOmissao?: boolean }
-  | { type: "AVANCAR_FASE"; tom: TomCampanha }
+  | { type: "AVANCAR_FASE"; tom: TomCampanha; recursoJuridicoContratado?: boolean }
   | { type: "REINICIAR" };
 
 function reducer(state: GameState | null, action: Action): GameState | null {
@@ -33,7 +33,7 @@ function reducer(state: GameState | null, action: Action): GameState | null {
         : state;
     case "AVANCAR_FASE": {
       if (!state) return state;
-      const novoEstado = avancarFase(state, action.tom);
+      const novoEstado = avancarFase(state, action.tom, action.recursoJuridicoContratado);
       if (novoEstado.terminado && novoEstado.resultado) {
         salvarNoHistorico({
           jogadorId: novoEstado.jogadorId,

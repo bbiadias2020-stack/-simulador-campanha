@@ -1,6 +1,8 @@
 import {
+  CUSTO_RECURSO_JURIDICO_MI,
   FATOR_PROB_CASSACAO_POR_PONTO,
   FATOR_PROB_FALENCIA_POR_MI,
+  FATOR_REDUCAO_CASSACAO_COM_RECURSO,
   INCREMENTO_PROB_POR_RODADA,
   LIMIAR_DIVIDA_FALENCIA,
   LIMIAR_RISCO_CASSACAO,
@@ -231,12 +233,31 @@ export function resolverDilema(
  *    passou de 50%, o jogo termina aqui; senão, vai para o 2º turno com os 2
  *    mais votados. Se a fase que está terminando já é o 2º turno, apura o
  *    resultado final entre os 2 finalistas e termina o jogo.
+ *
+ * `recursoJuridicoContratado`: só tem efeito se o risco jurídico já passou do
+ * limiar de cassação — custa CUSTO_RECURSO_JURIDICO_MI (vira dívida se faltar
+ * caixa) e reduz a chance de cassação desta rodada específica, sem zerar o
+ * risco de base (litígio ativo atrasa, não garante vitória — ver README).
  */
-export function avancarFase(state: GameState, tomJogador: TomCampanha = "moderado"): GameState {
+export function avancarFase(
+  state: GameState,
+  tomJogador: TomCampanha = "moderado",
+  recursoJuridicoContratado = false,
+): GameState {
   const comReacao = reagirAdversarios(aplicarCrescimentoOrganico(state), tomJogador);
 
   let jogador = comReacao.candidatos[comReacao.jogadorId];
   let cursor = comReacao.rngCursor;
+
+  if (recursoJuridicoContratado && jogador.metricas.riscoJuridico > LIMIAR_RISCO_CASSACAO) {
+    const caixaDisponivel = jogador.metricas.caixaMi;
+    const excedente = Math.max(CUSTO_RECURSO_JURIDICO_MI - caixaDisponivel, 0);
+    jogador = {
+      ...jogador,
+      metricas: { ...jogador.metricas, caixaMi: Math.max(caixaDisponivel - CUSTO_RECURSO_JURIDICO_MI, 0) },
+      dividaMi: jogador.dividaMi + excedente,
+    };
+  }
   const riscosRestantes: typeof comReacao.riscosOcultos = [];
   const crisesEstouradas: typeof comReacao.historicoDecisoes = [];
 
@@ -277,10 +298,11 @@ export function avancarFase(state: GameState, tomJogador: TomCampanha = "moderad
   if (jogador.metricas.riscoJuridico > LIMIAR_RISCO_CASSACAO) {
     const sorteio = nextRandom(comReacao.seed, cursor);
     cursor = sorteio.cursor;
-    const probabilidade = Math.min(
+    const probabilidadeBase = Math.min(
       PROB_MAX_CASSACAO,
       PROB_BASE_CASSACAO + (jogador.metricas.riscoJuridico - LIMIAR_RISCO_CASSACAO) * FATOR_PROB_CASSACAO_POR_PONTO,
     );
+    const probabilidade = recursoJuridicoContratado ? probabilidadeBase * FATOR_REDUCAO_CASSACAO_COM_RECURSO : probabilidadeBase;
     if (sorteio.valor < probabilidade) {
       resultadoSaidaAntecipada = { ...construirPlacarSaidaAntecipada(comReacao, jogador), cassado: true };
       descricaoSaidaAntecipada = "O risco jurídico acumulado resultou em decisão judicial que encerrou a campanha.";

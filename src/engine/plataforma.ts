@@ -1,6 +1,10 @@
 import {
   AFINIDADE_SEGMENTO_AREA,
+  CUSTO_GOVERNABILIDADE_EXTRA_PROMESSA_EXTREMA,
   CUSTO_GOVERNABILIDADE_POR_PONTO_ENFASE,
+  FATOR_CUSTO_GOVERNABILIDADE_DIVIDA_PLATAFORMA,
+  LIMIAR_DIVIDA_PLATAFORMA_ARRISCADA,
+  LIMIAR_ENFASE_PROMESSA_EXTREMA,
   LIMIAR_ENFASE_VIRA_PROMESSA,
   PESO_ENFASE_AREA,
 } from "../config/balance";
@@ -45,9 +49,17 @@ export function aplicarPlataforma(estado: CandidatoEstado, enfases: EnfasePlataf
     }
 
     if (pontos >= LIMIAR_ENFASE_VIRA_PROMESSA) {
+      const pontosExtremos = Math.max(0, pontos - LIMIAR_ENFASE_PROMESSA_EXTREMA);
+      const custoBase = pontos * CUSTO_GOVERNABILIDADE_POR_PONTO_ENFASE + pontosExtremos * CUSTO_GOVERNABILIDADE_EXTRA_PROMESSA_EXTREMA;
+
+      const fatorDivida =
+        estado.dividaMi > LIMIAR_DIVIDA_PLATAFORMA_ARRISCADA
+          ? 1 + (estado.dividaMi - LIMIAR_DIVIDA_PLATAFORMA_ARRISCADA) * FATOR_CUSTO_GOVERNABILIDADE_DIVIDA_PLATAFORMA
+          : 1;
+
       promessasGeradas.push({
         descricao: `Prometeu prioridade forte em ${NOME_AREA[area]} no governo`,
-        custoGovernabilidade: Math.round(pontos * CUSTO_GOVERNABILIDADE_POR_PONTO_ENFASE),
+        custoGovernabilidade: Math.round(custoBase * fatorDivida),
       });
     }
   }

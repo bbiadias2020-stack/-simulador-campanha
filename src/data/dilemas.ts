@@ -439,6 +439,12 @@ export const DILEMAS: Dilema[] = [
         id: "A",
         texto: "Usar o conteúdo de IA sem rótulo",
         antietica: true,
+        // Pesquisa real: deepfakes têm efeito eleitoral mensurável baixo (reforçam
+        // quem já concordava, não convertem) e são mais fáceis de desmascarar
+        // tecnicamente — ganho imediato menor que o padrão antiético, risco de
+        // estourar maior.
+        ganhoImediatoAntieticoOverride: 1.15,
+        probabilidadeEstouroOverride: 0.35,
         efeitos: { intencaoVoto: 3, sentimento: 2 },
         reacao: "O clipe viraliza em minutos — e também surgem os primeiros pedidos de perícia técnica ao TSE.",
       },

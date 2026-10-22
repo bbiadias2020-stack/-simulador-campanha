@@ -65,7 +65,7 @@ export function aplicarOpcaoDilema(
   opcao: OpcaoDilema,
   multiplicador: number,
 ): ResultadoOpcaoDilema {
-  const fatorExtra = opcao.antietica ? BONUS_IMEDIATO_ANTIETICO : 1;
+  const fatorExtra = opcao.antietica ? (opcao.ganhoImediatoAntieticoOverride ?? BONUS_IMEDIATO_ANTIETICO) : 1;
   const fatorTotal = multiplicador * fatorExtra;
 
   const metricas = { ...estado.metricas };
@@ -94,7 +94,7 @@ export function aplicarOpcaoDilema(
       id: `${dilema.id}:${opcao.id}`,
       origemId: dilema.id,
       descricao: `${dilema.titulo} — opção "${opcao.texto}"`,
-      probabilidadePorRodada: PROB_BASE_ESTOURO_RISCO,
+      probabilidadePorRodada: opcao.probabilidadeEstouroOverride ?? PROB_BASE_ESTOURO_RISCO,
       rodadasRestantes: RODADAS_MAX_RISCO_OCULTO,
       efeitoSeEstourar: { credibilidade: -12, riscoJuridico: 18, sentimento: -8 },
     };
