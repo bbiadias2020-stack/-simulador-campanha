@@ -7,7 +7,7 @@ import { calcularFitConselheiros, melhorConselheiro } from "../engine/advisors";
 import { efeitoVerba } from "../engine/budget";
 import { gerarResultadoPesquisa, margemErroPesquisa } from "../engine/polls";
 import { dilemasDaFase } from "../engine/selecaoConteudo";
-import { afinidadeTransferencia } from "../engine/secondRound";
+import { afinidadeTransferencia, apurarPrimeiroTurno } from "../engine/secondRound";
 import { enviarComentario, enviarDecisao } from "../integracao/ranking";
 import { RANKING_HABILITADO } from "../integracao/supabase";
 import { ORDEM_FASES, TIPO_RODADA } from "../engine/types";
@@ -30,6 +30,7 @@ import { CartaoConselheiro } from "./components/CartaoConselheiro";
 import { EstrelaAzul } from "./components/EstrelaAzul";
 import { GraficoHistoricoMetricas } from "./components/GraficoHistoricoMetricas";
 import { GraficoSegmentos } from "./components/GraficoSegmentos";
+import { GraficoVotos } from "./components/GraficoVotos";
 import { MarcadorRodada } from "./components/MarcadorRodada";
 import { PainelHistorico } from "./components/PainelHistorico";
 import { PainelMetricas } from "./components/PainelMetricas";
@@ -213,6 +214,13 @@ export function TelaRodada() {
   const eliminadosSegundoTurno = finalistasSegundoTurno
     ? (Object.keys(state.candidatos) as CandidatoId[]).filter((id) => !finalistasSegundoTurno.includes(id))
     : [];
+  // Recalcula a mesma apuração que decidiu quem vai pro 2º turno — pura, sem
+  // efeito colateral, reproduz o resultado exato já que nada mudou desde então.
+  const votosPrimeiroTurno = finalistasSegundoTurno
+    ? (Object.fromEntries(
+        apurarPrimeiroTurno(state).ranking.map((r) => [r.id, Math.round(r.percentual * 10) / 10]),
+      ) as Record<CandidatoId, number>)
+    : null;
 
   function topSegmentos(id: CandidatoId, n = 2) {
     return Object.entries(state.candidatos[id].intencaoPorSegmento)
@@ -487,6 +495,13 @@ export function TelaRodada() {
               <span className="rotulo-fase">🗳️ Vai para o 2º turno</span>
               <h2>Quem disputa, e quem cada um precisa conquistar</h2>
               <p>Ninguém passou de 50% no 1º turno. Agora é só entre vocês dois.</p>
+
+              {votosPrimeiroTurno && (
+                <>
+                  <h3>🗳️ Quantos votos cada um teve no 1º turno</h3>
+                  <GraficoVotos votosFinais={votosPrimeiroTurno} candidatosBase={state.candidatosBase} />
+                </>
+              )}
 
               <div className="grid-briefing-finalistas">
                 {finalistasSegundoTurno.map((id) => {
