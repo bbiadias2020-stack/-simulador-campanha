@@ -137,13 +137,20 @@
 }
 
 /* ---------- botão de histórico + overlay ---------- */
-.botao-historico {
+.barra-acoes-topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.botao-historico,
+.botao-recomecar {
   display: inline-block;
   background: none;
   border: 1px solid var(--linha-forte);
   border-radius: 8px;
   padding: 8px 14px;
-  margin-bottom: 16px;
   color: var(--ink);
   font-size: 13px;
   font-weight: 600;
@@ -152,6 +159,62 @@
 
 .botao-historico:hover {
   border-color: var(--azul-federacao);
+}
+
+.botao-recomecar {
+  border-color: var(--negativo);
+  color: var(--negativo);
+}
+
+.botao-recomecar:hover {
+  background: var(--negativo);
+  color: var(--marfim);
+}
+
+.overlay-confirmacao {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 35, 58, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.cartao-confirmacao {
+  background: var(--cartao);
+  border-radius: 14px;
+  padding: 26px 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.cartao-confirmacao h3 {
+  margin: 0 0 8px;
+}
+
+.cartao-confirmacao p {
+  margin: 0 0 20px;
+  color: var(--ink-suave);
+  font-size: 14px;
+}
+
+.cartao-confirmacao__acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.botao-decisao--perigo {
+  background: var(--negativo);
+  border-color: var(--negativo);
+}
+
+.botao-decisao--perigo:hover {
+  background: var(--negativo);
+  filter: brightness(1.1);
 }
 
 .overlay-historico {

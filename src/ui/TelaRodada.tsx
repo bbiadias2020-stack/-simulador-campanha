@@ -142,6 +142,7 @@ export function TelaRodada() {
   const [comentarioRodada, setComentarioRodada] = useState("");
   const [comentarioEnviado, setComentarioEnviado] = useState(false);
   const [recursoJuridico, setRecursoJuridico] = useState(false);
+  const [confirmandoRecomeco, setConfirmandoRecomeco] = useState(false);
 
   // null = ainda não rodou; guardamos o faseIndex (não um booleano "primeira vez")
   // porque o StrictMode do React roda o efeito duas vezes na montagem em dev, e um
@@ -300,6 +301,10 @@ export function TelaRodada() {
     else setEtapa("tom");
   }
 
+  function recomecar() {
+    dispatch({ type: "REINICIAR" });
+  }
+
   function confirmarPlataforma() {
     dispatch({ type: "APLICAR_PLATAFORMA", enfases });
     if (dilemas.length > 0) setEtapa("dilema");
@@ -363,9 +368,31 @@ export function TelaRodada() {
 
       <div className="tela-rodada__corpo">
         <main className="tela-rodada__decisao">
-          <button type="button" className="botao-historico" onClick={() => setMostrarHistorico(true)}>
-            📜 Ver histórico da campanha
-          </button>
+          <div className="barra-acoes-topo">
+            <button type="button" className="botao-historico" onClick={() => setMostrarHistorico(true)}>
+              📜 Ver histórico da campanha
+            </button>
+            <button type="button" className="botao-recomecar" onClick={() => setConfirmandoRecomeco(true)}>
+              🔄 Recomeçar partida
+            </button>
+          </div>
+
+          {confirmandoRecomeco && (
+            <div className="overlay-confirmacao" role="dialog" aria-modal="true">
+              <div className="cartao-confirmacao">
+                <h3>Recomeçar a partida?</h3>
+                <p>Todo o progresso desta campanha será perdido — não dá pra desfazer.</p>
+                <div className="cartao-confirmacao__acoes">
+                  <button type="button" className="botao-decisao botao-decisao--secundario" onClick={() => setConfirmandoRecomeco(false)}>
+                    Cancelar
+                  </button>
+                  <button type="button" className="botao-decisao botao-decisao--primario botao-decisao--perigo" onClick={recomecar}>
+                    Sim, recomeçar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {etapa === "resultado" && resultadoRodada && (
             <section className="bloco-decisao">
